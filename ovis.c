@@ -5,7 +5,7 @@
 /** DRIVER MODULE INFO *****/
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Sadeem Sajid <sadeem.sajid@dreambigsemi.com>");
-MODULE_DESCRIPTION("USB driver for the KeyVisual hardware.");
+MODULE_DESCRIPTION("USB driver for the OVisual hardware.");
 /****************************/
 
 /** DEFINES *****/
@@ -60,7 +60,7 @@ static const struct file_operations keyvis_fops = {
  * and to have the device registered with the driver core
  */
 static struct usb_class_driver keyvis_class = {
-	.name =		"keyvis%d",
+	.name =		"ovis%d",
 	.fops =		&keyvis_fops,
 	.minor_base =	192, /* standard */
 };
@@ -71,7 +71,7 @@ static struct usb_device_id keyvis_ids[] = {
 };
 MODULE_DEVICE_TABLE(usb, keyvis_ids);
 
-static const char driver_name[] = "keyvis";
+static const char driver_name[] = "ovis";
 
 static struct usb_driver keyvis_driver = {
 	.name = driver_name,
@@ -85,7 +85,7 @@ static struct usb_driver keyvis_driver = {
 /** FUNCTION IMPLEMENTATIONS *****/
 static int keyvis_probe(struct usb_interface *intf, const struct usb_device_id *id)
 {
-	printk(KERN_DEBUG "[KEYVIS]: probing...\n");
+	printk(KERN_DEBUG "probing...\n");
 
 	struct keyvis_usb *dev;
 	struct usb_endpoint_descriptor *int_in, *int_out;
@@ -110,7 +110,7 @@ static int keyvis_probe(struct usb_interface *intf, const struct usb_device_id *
 			NULL, NULL, &int_in, &int_out);
 	if (retval) {
 		dev_err(&intf->dev,
-			"[KEYVIS]: Could not find both bulk-in and bulk-out endpoints\n");
+			"Could not find both bulk-in and bulk-out endpoints\n");
 		goto error;
 	}
 
@@ -139,7 +139,7 @@ static int keyvis_probe(struct usb_interface *intf, const struct usb_device_id *
 
 	/* let the user know what node this device is now attached to */
 	dev_info(&intf->dev,
-		 "[KEYVIS]: USB device now attached to USBSkel-%d",
+		 "USB device now attached to ovis%d",
 		 intf->minor);
 	return 0;
 
@@ -152,7 +152,7 @@ error:
 
 static void keyvis_disconnect(struct usb_interface *intf)
 {
-	printk(KERN_DEBUG "[KEYVIS]: disconnecting...\n");
+	printk(KERN_DEBUG "disconnecting...\n");
 
 	struct keyvis_usb *dev;
 	int minor = intf->minor;
@@ -170,7 +170,7 @@ static void keyvis_disconnect(struct usb_interface *intf)
 	/* decrement our usage count */
 	kref_put(&dev->kref, keyvis_delete);
 
-	dev_info(&intf->dev, "KeyVis USB #%d now disconnected", minor);
+	dev_info(&intf->dev, "OVisual USB #%d now disconnected", minor);
 }
 
 static void keyvis_delete(struct kref *kref)
@@ -186,8 +186,6 @@ static void keyvis_delete(struct kref *kref)
 
 static int keyvis_open(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "[KEYVIS] Device opened\n");
-
 	struct keyvis_usb *dev;
 	struct usb_interface *interface;
 	int subminor;
@@ -208,10 +206,6 @@ static int keyvis_open(struct inode *inode, struct file *file)
 		retval = -ENODEV;
 		goto exit;
 	}
-
-	// retval = usb_autopm_get_interface(interface);
-	// if (retval)
-	// 	goto exit;
 
 	/* increment our usage count for the device */
 	kref_get(&dev->kref);
@@ -298,7 +292,6 @@ static ssize_t keyvis_write(struct file *file, const char *user_buffer,
 	 */
 	usb_free_urb(urb);
 
-
 	return writesize;
 
 error_unanchor:
@@ -341,15 +334,11 @@ static void keyvis_write_bulk_callback(struct urb *urb)
 
 static int keyvis_release(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "[KEYVIS] Device released\n");
 	struct keyvis_usb *dev;
 
 	dev = file->private_data;
 	if (dev == NULL)
 		return -ENODEV;
-
-	/* allow the device to be autosuspended */
-	// usb_autopm_put_interface(dev->interface);
 
 	/* decrement the count on our device */
 	kref_put(&dev->kref, keyvis_delete);
@@ -359,12 +348,12 @@ static int keyvis_release(struct inode *inode, struct file *file)
 
 static int __init entry(void)
 {
-	printk(KERN_INFO "KeyVis v0.1 by Sadeem Sajid <sadeem.sajid@dreambigsemi.com>\n");
+	printk(KERN_INFO "OVisual P-Series v0.1 by Sadeem Sajid <sadeem.sajid@dreambigsemi.com>\n");
 	int ret = 0;
 	ret = usb_register(&keyvis_driver);
 
 	if (ret) {
-		printk(KERN_ERR "[KEYVIS]: could not register driver!\n");
+		printk(KERN_ERR "Could not register driver!\n");
 	}
 
 	return ret;
@@ -372,7 +361,7 @@ static int __init entry(void)
 
 static void __exit dentry(void)
 {
-	printk(KERN_INFO "[KEYVIS]: unloading kernel...\n");
+	printk(KERN_INFO "Unloading kernel...\n");
 	usb_deregister(&keyvis_driver);
 }
 

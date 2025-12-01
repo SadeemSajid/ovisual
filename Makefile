@@ -1,4 +1,4 @@
-obj-m += keyvis.o
+obj-m += ovis.o
 
 all:
 	make -C /home/sadeem/kernel/linux-6.17 M=$(PWD) modules
